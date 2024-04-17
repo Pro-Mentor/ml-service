@@ -62,4 +62,4 @@ http://127.0.0.1:8000
 
 ## Admin dashboard endpoint
 
-http://127.0.0.1:8000/admin/
+http://127.0.0.1:8000/api/v1/skills/admin/

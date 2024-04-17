@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from skills.models import Category, Skill
+from skills.models import Category, Skill, Job, JobGuide
     
 class SkillSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
@@ -35,3 +35,23 @@ class CategorySerializer(serializers.ModelSerializer):
         instance.value = validated_data.get('value', instance.value)
         instance.save()
         return instance
+    
+class JobGuideSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    value = serializers.CharField()
+    job_id = serializers.PrimaryKeyRelatedField(queryset=JobGuide.objects.all(), source='job')
+    skills = serializers.CharField()
+
+    class Meta:
+        model = JobGuide
+        fields = ['id', 'value', 'job_id', 'skills']
+
+    
+class JobSerializer(serializers.ModelSerializer):
+    id: serializers.IntegerField(read_only=True)
+    value = serializers.CharField()
+    job = JobGuideSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Job
+        fields = ['id', 'value', 'job']

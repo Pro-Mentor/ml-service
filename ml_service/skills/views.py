@@ -8,9 +8,9 @@ from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 from sklearn.feature_extraction.text import CountVectorizer
 
-from skills.models import Category, Skill
-from skills.serializers import CategorySerializer, SkillSerializer
-from .utils import TextPreprocessor
+from skills.models import Category, Skill, Job, JobGuide
+from skills.serializers import CategorySerializer, SkillSerializer, JobSerializer
+from .utils import TextPreprocessor, ListMethods
 
 # get the logger
 logger = logging.getLogger(__name__)
@@ -117,9 +117,35 @@ def request_path(request):
     
     if request.method == 'POST':
         data = JSONParser().parse(request)
-        preprocessed_skills = TextPreprocessor.preprocess_text(data.get('skills'))
+        skills = data.get('skills')
+        preprocessed_skills = TextPreprocessor.preprocess_text(skills)
         sentence_trans = cv.transform([preprocessed_skills])
         prediction = model.predict(sentence_trans)
+
+        job = Job.objects.filter(value = prediction[0])
+
+        serializer = JobSerializer(job, many=True)
+        guides = serializer.data[0]['job']
+
+        skillList = skills.split(',') if skills else []
+
+        careerGuide = []
+
+        for guide in guides:
+            if ListMethods.check_skill_in_array(skillList, guide['skills']):
+                careerGuide.append({
+                    "id": guide["id"],
+                    "value": guide["value"],
+                    "needToImprove": False
+                })
+            else:
+                careerGuide.append({
+                    "id": guide["id"],
+                    "value": guide["value"],
+                    "needToImprove": True
+                })
+
         return JsonResponse({
-            'job': prediction[0]
-        })
+            "job": prediction[0],
+            "guides": careerGuide
+        }, safe=False)

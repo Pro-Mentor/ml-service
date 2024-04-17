@@ -36,3 +36,14 @@ class TextPreprocessor:
         text = ' '.join(lemmatized_text)
 
         return text
+    
+    
+class ListMethods:
+
+    @staticmethod
+    def check_skill_in_array(skills, target_string):
+
+        for skill in skills:
+            if skill in target_string:
+                return True
+        return False
