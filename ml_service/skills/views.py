@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from sklearn.feature_extraction.text import CountVectorizer
 
 from skills.models import Category, Skill, Job, JobGuide
-from skills.serializers import CategorySerializer, SkillSerializer, JobSerializer
+from skills.serializers import CategorySerializer, SkillSerializer, JobSerializer, SkillUploadSerializer
 from .utils import TextPreprocessor, ListMethods
 
 # get the logger
@@ -40,6 +40,9 @@ def category_list(request):
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
     
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
     
 @csrf_exempt
 def category_detail(request, pk):
@@ -67,6 +70,9 @@ def category_detail(request, pk):
         category.delete()
         return HttpResponse(status=204)
     
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
     
 @csrf_exempt
 def skill_list(request):
@@ -83,6 +89,37 @@ def skill_list(request):
             serializer.save()
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
+    
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+
+@csrf_exempt
+def skill_upload(request):
+    
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+        skills_to_save = []
+
+        if isinstance(data.get('value'), list):
+            existing_skills = Skill.objects.filter(value__in=data['value'], category_id=data.get('category_id'))
+            existing_skill_values = set(skill.value for skill in existing_skills)
+            
+            for value in data['value']:
+                if value not in existing_skill_values:
+                    skills_to_save.append({'value': value, 'category_id': data.get('category_id')})
+
+            serializer = SkillSerializer(data=skills_to_save, many=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=201, safe=False)
+            return JsonResponse(serializer.errors, status=400)
+        
+        return JsonResponse({'error': 'Invalid request body'}, status=400)
+    
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     
 @csrf_exempt
@@ -110,6 +147,9 @@ def skill_detail(request, pk):
     elif request.method == 'DELETE':
         skill.delete()
         return HttpResponse(status=204)
+    
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
     
       
 @csrf_exempt
@@ -149,3 +189,6 @@ def request_path(request):
             "job": prediction[0],
             "guides": careerGuide
         }, safe=False)
+    
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)

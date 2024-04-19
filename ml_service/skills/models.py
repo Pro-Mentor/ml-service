@@ -11,8 +11,11 @@ class Category(models.Model):
     
     
 class Skill(models.Model):
-    value = models.CharField(max_length=255, unique = True)
+    value = models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category')
+
+    class Meta:
+        unique_together = ('value', 'category')
     
     def get_label(self):
         return f"{self.value}"

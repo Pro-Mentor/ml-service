@@ -19,6 +19,23 @@ class SkillSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+    
+class SkillUploadSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    value = serializers.CharField()
+    category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category')
+
+    class Meta:
+        model = Skill
+        fields = ['id', 'value', 'category_id']
+
+    def create(self, validated_data):
+        if isinstance(validated_data, list):
+            return [Skill.objects.create(**item) for item in validated_data]
+        else:
+            return Skill.objects.create(**validated_data)
+        
+    
 class CategorySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     value = serializers.CharField()
